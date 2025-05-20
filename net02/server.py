@@ -33,7 +33,7 @@ def forward_message(config, message):
     msg_len = len(message)
     total_sent = 0
     while total_sent < msg_len:
-      sent = client_socket.send(message[:total_sent].encode())
+      sent = client_socket.send(message[total_sent:].encode())
       if sent == 0:
         print("==========\nBroken Froward\n==========")
         return
