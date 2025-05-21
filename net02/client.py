@@ -10,11 +10,13 @@ def client(config):
   client_socket.connect((host, port_server))
   client_own_address = client_socket.getsockname()
 
-  print(f"Start client: port={client_own_address[1]}, connect with host{host}, ip={ip}")
+  print(f"Start client: port={client_own_address[1]}, connect with host={host}, ip={ip}")
 
   while True:
     message = input(f"{host}/{ip}/% ")
-    
+    if message.isspace() or len(message) == 0:
+      continue
+
     client_socket.send(message.encode())
     if message == "exit": break
   

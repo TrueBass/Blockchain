@@ -9,9 +9,7 @@ def job(connection, address, config):
 
     print(f"Message from client ip={address[0]}, port={address[1]}:", message)
 
-    if message == "exit":
-      break
-    elif len(message) == 0:
+    if message == "exit" or len(message) == 0:
       break
 
     forward_message(config, message)
@@ -22,6 +20,12 @@ def job(connection, address, config):
 
 def forward_message(config, message):
   for h in config["hosts"]:
+    if h["forwarded"] > 1:
+      h["forwarded"] = 0
+      break
+    else:
+      h["forwarded"] += 1
+
     host = h["ip"]
     port = 5000 if "port" not in h else h["port"]
 
@@ -52,7 +56,7 @@ def server(config):
   server_socket.bind((host, port))
   server_socket.listen(10)
 
-  print(f"Start server: port={port}, host={host}, ip={ip}")
+  print(f"{'='*50}\nStart server: port={port}, host={host}, ip={ip}\n{'='*50}")
 
   while True:
     connection, address = server_socket.accept()
@@ -72,7 +76,8 @@ def get_config_from_file(config):
       data = line.split()
       config["hosts"].append({
         "ip": data[0],
-        "port": 5000 if len(data) == 1 else int(data[1])
+        "port": 5000 if len(data) == 1 else int(data[1]),
+        "forwarded": 0
       })
 
 
@@ -90,7 +95,7 @@ def get_command_line_argument(config):
 
 
 if __name__ == "__main__":
-  config = {}
+  config = {"forwarded": []}
   
   get_command_line_argument(config)
   get_config_from_file(config)
