@@ -13,6 +13,7 @@ def job(connection, address, config):
       break
 
     forward_message(config, message)
+    config["forwarded"].append(address[0])
 
   connection.close()
   print(f"End connection with ip={address[0]}, port={address[1]}")
