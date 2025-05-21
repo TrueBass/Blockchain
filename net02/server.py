@@ -9,12 +9,14 @@ def job(connection, address, config):
 
     print(f"Message from client ip={address[0]}, port={address[1]}:", message)
 
-    if message == "exit":
+    if message == "exit" or len(message) == 0:
       break
-    elif len(message) == 0:
+    elif address in config["forwarded"]:
+      print("Already forwarded. Breaking.")
       break
 
     forward_message(config, message)
+    config["forwarded"].append(address[0])
 
   connection.close()
   print(f"End connection with ip={address[0]}, port={address[1]}")
@@ -52,7 +54,7 @@ def server(config):
   server_socket.bind((host, port))
   server_socket.listen(10)
 
-  print(f"Start server: port={port}, host={host}, ip={ip}")
+  print(f"{'='*50}\nStart server: port={port}, host={host}, ip={ip}\n{'='*50}")
 
   while True:
     connection, address = server_socket.accept()
@@ -90,7 +92,7 @@ def get_command_line_argument(config):
 
 
 if __name__ == "__main__":
-  config = {}
+  config = {"forwarded": []}
   
   get_command_line_argument(config)
   get_config_from_file(config)
