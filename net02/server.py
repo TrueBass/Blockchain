@@ -12,8 +12,8 @@ def job(connection, address, config):
     if message == "exit" or len(message) == 0:
       break
 
-    forward_message(config, message)
-    config["forwarded"].append(address[0])
+    if forward_message(config, message):
+      break
 
   connection.close()
   print(f"End connection with ip={address[0]}, port={address[1]}")
@@ -21,9 +21,10 @@ def job(connection, address, config):
 
 def forward_message(config, message):
   for h in config["hosts"]:
-    if h["forwarded"] > 1:
-      h["forwarded"] = 0
-      break
+    print("HOST:", h)
+    if h["forwarded"] == 1:
+      print("======\nForwarded. Breaking.\n======")
+      return True
     else:
       h["forwarded"] += 1
 
@@ -46,6 +47,7 @@ def forward_message(config, message):
       print(f"=> sent {total_sent}B of {msg_len}")
 
     client_socket.close()
+  return False
 
 
 def server(config):
@@ -94,10 +96,25 @@ def get_command_line_argument(config):
   config["port"] = int(port)
 
 
+def make_shared_config(config, manager):
+  shared_config = manager.dict()
+  shared_hosts = manager.list()
+
+  for host_data in config["hosts"]:
+    shared_host_dict = manager.dict(host_data)
+    shared_hosts.append(shared_host_dict)
+
+  shared_config["hosts"] = shared_hosts
+  shared_config["port"] = config["port"]
+  return shared_config
+
 
 if __name__ == "__main__":
-  config = {"forwarded": []}
+  config = {}
+
+  manager = multiprocessing.Manager()
   
   get_command_line_argument(config)
   get_config_from_file(config)
-  server(config)
+  shared_config = make_shared_config(config, manager)
+  server(shared_config)
