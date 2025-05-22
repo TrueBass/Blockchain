@@ -1,16 +1,19 @@
+from typing import Any
+
 import sys
 import socket, multiprocessing
+import multiprocessing.managers
 
 
 def job(connection, address, config):
   while True:
     message = connection.recv(1024)
     message = message.decode()
-
-    print(f"Message from client ip={address[0]}, port={address[1]}:", message)
-
+    
     if message == "exit" or len(message) == 0:
       break
+
+    print(f"Message from client ip={address[0]}, port={address[1]}:", message)
 
     if forward_message(config, message):
       break
@@ -21,9 +24,9 @@ def job(connection, address, config):
 
 def forward_message(config, message):
   for h in config["hosts"]:
-    print("HOST:", h)
     if h["forwarded"] == 1:
-      print("======\nForwarded. Breaking.\n======")
+      print("======\nAlready Forwarded. Breaking.\n======")
+      h["forwarded"] = 0
       return True
     else:
       h["forwarded"] += 1
@@ -91,12 +94,16 @@ def get_command_line_argument(config):
   if len(sys.argv) == 1:
     port = DEFAULT_SERVER_PORT
   elif len(sys.argv) == 2:
-    port = sys.argv[1]
+    port = int(sys.argv[1])
 
-  config["port"] = int(port)
+  config["port"] = port
 
 
-def make_shared_config(config, manager):
+def make_shared_config(config: dict[str, Any], manager: multiprocessing.managers.SyncManager) -> multiprocessing.managers.DictProxy:
+  """Converts config into a shared multiprocessing dict.\n
+  Without that,child processes couldn't affect config globally.\n
+  They change their copy of the config
+  """
   shared_config = manager.dict()
   shared_hosts = manager.list()
 
@@ -118,3 +125,4 @@ if __name__ == "__main__":
   get_config_from_file(config)
   shared_config = make_shared_config(config, manager)
   server(shared_config)
+  manager.shutdown()

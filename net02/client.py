@@ -29,9 +29,9 @@ def get_command_line_argument(config):
   if len(sys.argv) == 1:
     port = DEFAULT_SERVER_PORT
   elif len(sys.argv) == 2:
-    port = sys.argv[1]
+    port = int(sys.argv[1])
 
-  config["server_port"] = int(port)
+  config["server_port"] = port
 
 
 if __name__ == "__main__":
